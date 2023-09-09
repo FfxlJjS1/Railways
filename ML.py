@@ -27,25 +27,32 @@ model.compile(optimizer='adam',
 def build_routes(stations, full_timetable):
     return None
 
+# Преобразование времени в числовой формат
+def convert_time_to_numbers(time_str):
+    hours, minutes = map(int, time_str.split(':'))
+    return hours * 60 + minutes
+
 def convert_data_select_to_train_data(data_select):
     stations = data_select['stations']
     stations = np.array([stations[station_name] for station_name in data_select['stations']])
     
     full_timetable = data_select['full_timetable']
-    
-    train_data = [stations, full_timetable]
+    tensor_data = {}
+
+    for key, value in full_timetable.items():
+        route = np.array(value["route"], dtype=int)
+        free_carriage = np.array(value["free_carriage"], dtype=int)
+        timetable = [convert_time_to_numbers(time_range.split(' - ')[0]) for time_range in value["timetable"]]
+        timetable = np.array(timetable, dtype=int)
+        tensor_data[key] = {"route": route, "free_carriage": free_carriage, "timetable": timetable}
+
+    train_data = [stations, tensor_data]
 
     return train_data
 
-def convert_data_select_to_val_data(data_select):
-    
-    
-    return None    
-
 def model_fit(model, data_select):
     train_data = convert_data_select_to_train_data(data_select)
-    validation_data = convert_data_select_to_val_data(data_select)
-
+    
     validation_data = build_routes(train_data[0], train_data[1])
 
     # Тренировка модели
