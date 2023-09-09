@@ -15,7 +15,7 @@ data = load_data('dataset.json')
 model = models.Sequential([
     layers.Dense(64, activation='relu', input_shape=((7,7),(None, 3, None, None))),
     layers.Dense(32, activation='relu'),
-    layers.Dense(output_shape=(), activation='softmax')
+    layers.Dense(output_shape=(None,7), activation='softmax') # lines are trains and columns are stations where strains will trasport carriage  by own timetable
 ])
 
 # Компиляция модели
@@ -25,7 +25,37 @@ model.compile(optimizer='adam',
 
 # Обучение модели
 def build_routes(stations, full_timetable):
-    return None
+    res_matr = [[0]*7 for i in range(len(full_timetable))]
+
+    for train_number in full_timetable:
+        timetable = full_timetable[train_number]
+
+        for routeIndex in range(len(timetable['route'])-1):
+            free_carriage = timetable['free_carriage'][routeIndex]
+
+            current_station_number = int(timetable['route'][routeIndex])
+            next_station_number = int(timetable['route'][routeIndex+1])
+
+            for_next_station_carriage_count = int(stations[current_station_number-1][next_station_number-1])
+
+            transport_carriage_count = min(free_carriage, for_next_station_carriage_count)
+
+            stations[current_station_number-1][next_station_number-1] = str(int(stations[current_station_number-1][next_station_number-1]) - transport_carriage_count)
+
+            res_matr[list(full_timetable.keys()).index(train_number)][next_station_number-1] = transport_carriage_count
+
+    # 1. Самый нечастый (короткий, по узлу) / самое большое количество за проезд. Приоритет из-за количества за раз на близкий, иначе свалка
+
+    # Переброска/прямой путь по самому большому кол-во вагонов в результате. По короткому пути из-за узких узлов поездов
+
+
+    # Прямые пути / учет результирующей переброски... Пересечение возможного количества вагонов для переброски на каждом пути дальнего пути
+    # Приоритет по количеству на близкий и по узлу
+
+    # Пересечение / те, которые не перебросить по прямой. Пересечение возможного количества вагонов для переброски на каждом пути переброски
+
+
+    return res_matr
 
 # Преобразование времени в числовой формат
 def convert_time_to_numbers(time_str):
@@ -61,3 +91,4 @@ def model_fit(model, data_select):
 for data_select in data:
     model_fit(model, data_select)
 
+ 
